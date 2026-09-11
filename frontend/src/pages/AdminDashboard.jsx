@@ -119,6 +119,40 @@ export default function AdminDashboard() {
     }
   };
 
+  const [bookingFilter, setBookingFilter] = useState('all');
+  const [actionInProgressId, setActionInProgressId] = useState(null);
+
+  const handleApproveBooking = async (bookingId) => {
+    setActionInProgressId(bookingId);
+    try {
+      await api.post(`/admin/tickets/${bookingId}/approve`);
+      setSuccessMsg(`Pass #BP-${String(bookingId).padStart(6, '0')} has been APPROVED successfully!`);
+      loadData();
+      setTimeout(() => setSuccessMsg(''), 4000);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to approve pass');
+    } finally {
+      setActionInProgressId(null);
+    }
+  };
+
+  const handleRejectBooking = async (bookingId) => {
+    if (!window.confirm(`Are you sure you want to REJECT pass #BP-${String(bookingId).padStart(6, '0')}?`)) {
+      return;
+    }
+    setActionInProgressId(bookingId);
+    try {
+      await api.post(`/admin/tickets/${bookingId}/reject`);
+      setSuccessMsg(`Pass #BP-${String(bookingId).padStart(6, '0')} has been REJECTED.`);
+      loadData();
+      setTimeout(() => setSuccessMsg(''), 4000);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to reject pass');
+    } finally {
+      setActionInProgressId(null);
+    }
+  };
+
   const handleCancelBooking = async (bookingId) => {
     if (!window.confirm(`Are you sure you want to cancel booking #BP-${String(bookingId).padStart(6, '0')}? This will free the seat.`)) {
       return;
@@ -423,157 +457,320 @@ export default function AdminDashboard() {
       )}
 
       {/* TAB 4: All Bookings / Passes */}
-      {activeTab === 'bookings' && (
-        <div className="space-y-4 animate-fadeIn">
-          <h2 className="text-base sm:text-lg font-bold text-slate-900">All Passenger Bookings ({bookings.length})</h2>
-          
-          {/* Mobile View: Cards */}
-          <div className="block md:hidden space-y-3">
-            {bookings.map((b) => (
-              <div key={b.id} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                  <div>
-                    <span className="font-mono font-bold text-blue-600 text-xs">#BP-{String(b.id).padStart(6, '0')}</span>
-                    <h4 className="font-bold text-slate-900 text-sm">{b.user_name}</h4>
-                    <p className="text-[10px] text-slate-400">{b.user_email}</p>
-                  </div>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                    b.is_boarded ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
-                  }`}>
-                    {b.is_boarded ? 'BOARDED' : 'PENDING'}
-                  </span>
-                </div>
+      {activeTab === 'bookings' && (() => {
+        const pendingCount = bookings.filter(b => b.status === 'PENDING').length;
+        const confirmedCount = bookings.filter(b => b.status === 'CONFIRMED' && !b.is_boarded).length;
+        const boardedCount = bookings.filter(b => b.is_boarded).length;
+        const rejectedCount = bookings.filter(b => b.status === 'REJECTED').length;
 
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div>
-                    <p className="text-slate-400 text-[10px] font-bold uppercase">Route</p>
-                    <p className="font-semibold text-slate-800">{b.source} ➔ {b.destination}</p>
-                  </div>
-                  <div>
-                    <p className="text-slate-400 text-[10px] font-bold uppercase">Seat & Date</p>
-                    <p className="font-bold text-indigo-600">Seat #{b.seat_number} <span className="text-slate-500 font-normal">({b.travel_date})</span></p>
-                  </div>
-                </div>
+        const filteredBookings = bookings.filter(b => {
+          if (bookingFilter === 'pending') return b.status === 'PENDING';
+          if (bookingFilter === 'confirmed') return b.status === 'CONFIRMED' && !b.is_boarded;
+          if (bookingFilter === 'boarded') return b.is_boarded;
+          if (bookingFilter === 'rejected') return b.status === 'REJECTED';
+          return true;
+        });
 
-                <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                  <div className="flex items-center gap-1.5">
-                    <span className="px-2 py-0.5 bg-blue-50 text-blue-700 font-bold text-[10px] rounded uppercase">
-                      {b.pass_type || 'single'}
-                    </span>
-                    <span className="font-bold text-emerald-700 text-xs">₹{b.amount_paid || b.price}</span>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <a
-                      href={`${API_BASE_URL}/api/ticket/pdf/${b.id}?download=1`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl flex items-center gap-1 shadow-sm cursor-pointer"
-                      title="Download PDF Pass"
-                    >
-                      <FileText className="w-3.5 h-3.5" />
-                      <span>PDF</span>
-                    </a>
-                    <a
-                      href={`${API_BASE_URL}/api/ticket/qr/${b.id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-1.5 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200"
-                      title="View QR"
-                    >
-                      <QrCode className="w-3.5 h-3.5 text-blue-600" />
-                    </a>
-                    <button
-                      onClick={() => handleCancelBooking(b.id)}
-                      className="p-1.5 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 cursor-pointer"
-                      title="Cancel Booking"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
+        return (
+          <div className="space-y-4 animate-fadeIn">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h2 className="text-base sm:text-lg font-bold text-slate-900">Passenger Passes & Bookings ({bookings.length})</h2>
+                <p className="text-xs text-slate-500">Review, approve, reject or inspect passenger travel passes.</p>
               </div>
-            ))}
-          </div>
 
-          {/* Desktop View: Table */}
-          <div className="hidden md:block bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
-            <div className="overflow-x-auto custom-scrollbar">
-              <table className="w-full text-left text-xs text-slate-700">
-                <thead className="bg-slate-50 text-slate-500 font-bold uppercase border-b border-slate-200 text-[10px]">
-                  <tr>
-                    <th className="p-4">Pass ID</th>
-                    <th className="p-4">Passenger</th>
-                    <th className="p-4">Route</th>
-                    <th className="p-4">Category</th>
-                    <th className="p-4">Travel Date</th>
-                    <th className="p-4">Seat</th>
-                    <th className="p-4">Fare</th>
-                    <th className="p-4">Boarded</th>
-                    <th className="p-4 text-right">Pass Docs</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 font-medium">
-                  {bookings.map((b) => (
-                    <tr key={b.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="p-4 font-bold text-blue-700">#BP-{String(b.id).padStart(6, '0')}</td>
-                      <td className="p-4">
-                        <div className="font-bold text-slate-900">{b.user_name}</div>
-                        <div className="text-[10px] text-slate-400">{b.user_email}</div>
-                      </td>
-                      <td className="p-4 font-semibold">
-                        {b.source} ➔ {b.destination}
-                      </td>
-                      <td className="p-4">
-                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-100 text-blue-800 uppercase">
-                          {b.pass_type || 'single'}
-                        </span>
-                      </td>
-                      <td className="p-4 font-bold text-slate-800">{b.travel_date}</td>
-                      <td className="p-4 font-extrabold text-blue-600">Seat #{b.seat_number}</td>
-                      <td className="p-4 font-bold text-emerald-700">₹{b.amount_paid || b.price}</td>
-                      <td className="p-4">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                          b.is_boarded ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'
-                        }`}>
-                          {b.is_boarded ? 'BOARDED' : 'PENDING'}
-                        </span>
-                      </td>
-                      <td className="p-4 text-right space-x-1.5">
-                        <a
-                          href={`${API_BASE_URL}/api/ticket/qr/${b.id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-block p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg"
-                          title="View QR"
-                        >
-                          <QrCode className="w-3.5 h-3.5 text-blue-600" />
-                        </a>
-                        <a
-                          href={`${API_BASE_URL}/api/ticket/pdf/${b.id}?download=1`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-block p-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg cursor-pointer"
-                          title="Download PDF"
-                        >
-                          <FileText className="w-3.5 h-3.5" />
-                        </a>
-                        <button
-                          onClick={() => handleCancelBooking(b.id)}
-                          className="inline-block p-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors cursor-pointer"
-                          title="Cancel/Delete Booking"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              {/* Status Filter Tabs */}
+              <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar p-1 bg-slate-100 rounded-2xl border border-slate-200">
+                <button
+                  onClick={() => setBookingFilter('all')}
+                  className={`px-3 py-1.5 rounded-xl font-bold text-xs transition cursor-pointer ${
+                    bookingFilter === 'all' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  All ({bookings.length})
+                </button>
+                <button
+                  onClick={() => setBookingFilter('pending')}
+                  className={`px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition cursor-pointer ${
+                    bookingFilter === 'pending'
+                      ? 'bg-amber-500 text-white shadow-sm'
+                      : pendingCount > 0
+                        ? 'bg-amber-100 text-amber-900 font-extrabold border border-amber-300'
+                        : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <span>⏳ Pending</span>
+                  {pendingCount > 0 && (
+                    <span className="px-1.5 py-0.2 bg-red-500 text-white text-[10px] rounded-full font-mono">
+                      {pendingCount}
+                    </span>
+                  )}
+                </button>
+                <button
+                  onClick={() => setBookingFilter('confirmed')}
+                  className={`px-3 py-1.5 rounded-xl font-bold text-xs transition cursor-pointer ${
+                    bookingFilter === 'confirmed' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  ✓ Approved ({confirmedCount})
+                </button>
+                <button
+                  onClick={() => setBookingFilter('boarded')}
+                  className={`px-3 py-1.5 rounded-xl font-bold text-xs transition cursor-pointer ${
+                    bookingFilter === 'boarded' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  🚌 Boarded ({boardedCount})
+                </button>
+                {rejectedCount > 0 && (
+                  <button
+                    onClick={() => setBookingFilter('rejected')}
+                    className={`px-3 py-1.5 rounded-xl font-bold text-xs transition cursor-pointer ${
+                      bookingFilter === 'rejected' ? 'bg-white text-red-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    ✕ Rejected ({rejectedCount})
+                  </button>
+                )}
+              </div>
             </div>
+
+            {filteredBookings.length === 0 ? (
+              <div className="bg-white p-8 rounded-3xl border border-slate-200 text-center space-y-2">
+                <Ticket className="w-10 h-10 text-slate-300 mx-auto" />
+                <h3 className="font-bold text-slate-700 text-sm">No passes found in this filter</h3>
+                <p className="text-xs text-slate-400">Select another filter or wait for passenger submissions.</p>
+              </div>
+            ) : (
+              <>
+                {/* Mobile View: Cards */}
+                <div className="block md:hidden space-y-3">
+                  {filteredBookings.map((b) => (
+                    <div key={b.id} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                      <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                        <div>
+                          <span className="font-mono font-bold text-blue-600 text-xs">#BP-{String(b.id).padStart(6, '0')}</span>
+                          <h4 className="font-bold text-slate-900 text-sm">{b.user_name}</h4>
+                          <p className="text-[10px] text-slate-400">{b.user_email}</p>
+                        </div>
+                        
+                        <div>
+                          {b.status === 'PENDING' ? (
+                            <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-amber-100 text-amber-900 border border-amber-300 animate-pulse flex items-center gap-1">
+                              <span>⏳ Pending</span>
+                            </span>
+                          ) : b.status === 'REJECTED' ? (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-800 border border-red-200">
+                              ✕ REJECTED
+                            </span>
+                          ) : b.is_boarded ? (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                              BOARDED
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">
+                              ✓ CONFIRMED
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <p className="text-slate-400 text-[10px] font-bold uppercase">Route</p>
+                          <p className="font-semibold text-slate-800">{b.source} ➔ {b.destination}</p>
+                        </div>
+                        <div>
+                          <p className="text-slate-400 text-[10px] font-bold uppercase">Seat & Date</p>
+                          <p className="font-bold text-indigo-600">Seat #{b.seat_number} <span className="text-slate-500 font-normal">({b.travel_date})</span></p>
+                        </div>
+                      </div>
+
+                      {/* Approval Action Bar for Pending Passes */}
+                      {b.status === 'PENDING' && (
+                        <div className="p-2.5 bg-amber-50 rounded-xl border border-amber-200 flex items-center justify-between gap-2">
+                          <div className="text-[11px] font-bold text-amber-900">
+                            Awaiting Admin Approval:
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleApproveBooking(b.id)}
+                              disabled={actionInProgressId === b.id}
+                              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs rounded-xl shadow-sm flex items-center gap-1 transition cursor-pointer"
+                              title="Approve Pass"
+                            >
+                              <Check className="w-3.5 h-3.5 stroke-[3]" />
+                              <span>Approve</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRejectBooking(b.id)}
+                              disabled={actionInProgressId === b.id}
+                              className="px-2.5 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 font-bold text-xs rounded-xl transition cursor-pointer"
+                              title="Reject Pass"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                              <span>Reject</span>
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                        <div className="flex items-center gap-1.5">
+                          <span className="px-2 py-0.5 bg-blue-50 text-blue-700 font-bold text-[10px] rounded uppercase">
+                            {b.pass_type || 'single'}
+                          </span>
+                          <span className="font-bold text-emerald-700 text-xs">₹{b.amount_paid || b.price}</span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <a
+                            href={`${API_BASE_URL}/api/ticket/pdf/${b.id}?download=1`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl flex items-center gap-1 shadow-sm cursor-pointer"
+                            title="Download PDF Pass"
+                          >
+                            <FileText className="w-3.5 h-3.5" />
+                            <span>PDF</span>
+                          </a>
+                          <a
+                            href={`${API_BASE_URL}/api/ticket/qr/${b.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1.5 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200"
+                            title="View QR"
+                          >
+                            <QrCode className="w-3.5 h-3.5 text-blue-600" />
+                          </a>
+                          <button
+                            onClick={() => handleCancelBooking(b.id)}
+                            className="p-1.5 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 cursor-pointer"
+                            title="Cancel Booking"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop View: Table */}
+                <div className="hidden md:block bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
+                  <div className="overflow-x-auto custom-scrollbar">
+                    <table className="w-full text-left text-xs text-slate-700">
+                      <thead className="bg-slate-50 text-slate-500 font-bold uppercase border-b border-slate-200 text-[10px]">
+                        <tr>
+                          <th className="p-4">Pass ID</th>
+                          <th className="p-4">Passenger</th>
+                          <th className="p-4">Route</th>
+                          <th className="p-4">Category</th>
+                          <th className="p-4">Travel Date</th>
+                          <th className="p-4">Seat</th>
+                          <th className="p-4">Fare</th>
+                          <th className="p-4">Status / Review</th>
+                          <th className="p-4 text-right">Actions & Docs</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 font-medium">
+                        {filteredBookings.map((b) => (
+                          <tr key={b.id} className="hover:bg-slate-50/80 transition-colors">
+                            <td className="p-4 font-bold text-blue-700">#BP-{String(b.id).padStart(6, '0')}</td>
+                            <td className="p-4">
+                              <div className="font-bold text-slate-900">{b.user_name}</div>
+                              <div className="text-[10px] text-slate-400">{b.user_email}</div>
+                            </td>
+                            <td className="p-4 font-semibold">
+                              {b.source} ➔ {b.destination}
+                            </td>
+                            <td className="p-4">
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-100 text-blue-800 uppercase">
+                                {b.pass_type || 'single'}
+                              </span>
+                            </td>
+                            <td className="p-4 font-bold text-slate-800">{b.travel_date}</td>
+                            <td className="p-4 font-extrabold text-blue-600">Seat #{b.seat_number}</td>
+                            <td className="p-4 font-bold text-emerald-700">₹{b.amount_paid || b.price}</td>
+                            <td className="p-4">
+                              {b.status === 'PENDING' ? (
+                                <div className="flex items-center gap-1.5">
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300 animate-pulse">
+                                    ⏳ PENDING
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleApproveBooking(b.id)}
+                                    disabled={actionInProgressId === b.id}
+                                    className="p-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg shadow-sm transition cursor-pointer"
+                                    title="Approve Pass"
+                                  >
+                                    <Check className="w-3.5 h-3.5 stroke-[3]" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRejectBooking(b.id)}
+                                    disabled={actionInProgressId === b.id}
+                                    className="p-1.5 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition cursor-pointer"
+                                    title="Reject Pass"
+                                  >
+                                    <X className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              ) : b.status === 'REJECTED' ? (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-800 border border-red-200">
+                                  ✕ REJECTED
+                                </span>
+                              ) : b.is_boarded ? (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                                  BOARDED
+                                </span>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">
+                                  ✓ APPROVED
+                                </span>
+                              )}
+                            </td>
+                            <td className="p-4 text-right space-x-1.5">
+                              <a
+                                href={`${API_BASE_URL}/api/ticket/qr/${b.id}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-block p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg"
+                                title="View QR"
+                              >
+                                <QrCode className="w-3.5 h-3.5 text-blue-600" />
+                              </a>
+                              <a
+                                href={`${API_BASE_URL}/api/ticket/pdf/${b.id}?download=1`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-block p-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg cursor-pointer"
+                                title="Download PDF"
+                              >
+                                <FileText className="w-3.5 h-3.5" />
+                              </a>
+                              <button
+                                onClick={() => handleCancelBooking(b.id)}
+                                className="inline-block p-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors cursor-pointer"
+                                title="Cancel/Delete Booking"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* TAB 5: Users */}
       {activeTab === 'users' && (

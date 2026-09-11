@@ -134,14 +134,19 @@ export default function BookingModal({ route, onClose, onSuccess, onNavigateLogi
           {bookedTicket ? (
             /* SUCCESS CONFIRMATION VIEW */
             <div className="text-center space-y-5 py-2">
-              <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
-                <CheckCircle className="w-10 h-10" />
+              <div className="w-14 h-14 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-2 animate-bounce">
+                <Check className="w-7 h-7 stroke-[3]" />
               </div>
 
-              <div>
-                <h4 className="text-xl font-bold text-slate-800">Booking Confirmed!</h4>
-                <p className="text-xs text-slate-500 mt-1">
-                  Your digital pass and QR code have been generated securely on the server.
+              <div className="space-y-1.5">
+                <h4 className="text-lg sm:text-xl font-bold text-slate-900">Pass Application Submitted!</h4>
+                <div>
+                  <span className="inline-block px-3 py-0.5 bg-amber-100 text-amber-900 border border-amber-300 font-black text-xs rounded-full uppercase tracking-wide animate-pulse">
+                    ⏳ Status: Pending Admin Approval
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                  Your seat <b className="text-slate-800">#{bookedTicket.seat_number}</b> is reserved. Once the Admin approves your pass, it will become active for conductor boarding.
                 </p>
               </div>
 

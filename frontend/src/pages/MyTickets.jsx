@@ -176,14 +176,31 @@ export default function MyTickets({ onExploreRoutes }) {
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                      {ticket.status}
-                    </span>
+                    {ticket.status === 'PENDING' ? (
+                      <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-amber-400 text-slate-900 border border-amber-300 shadow-sm animate-pulse">
+                        ⏳ PENDING APPROVAL
+                      </span>
+                    ) : ticket.status === 'REJECTED' ? (
+                      <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-red-500/30 text-red-300 border border-red-500/40">
+                        ✕ REJECTED
+                      </span>
+                    ) : (
+                      <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                        ✓ CONFIRMED
+                      </span>
+                    )}
                     <div className="text-xs font-bold text-slate-200 mt-1">₹{ticket.amount_paid || ticket.price}</div>
                   </div>
                 </div>
 
                 <div className="p-5 space-y-4 flex-1">
+                  {ticket.status === 'PENDING' && (
+                    <div className="p-2.5 bg-amber-50 rounded-2xl border border-amber-200 text-amber-900 text-xs flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-amber-600 shrink-0" />
+                      <span><b>Under Admin Review:</b> Your seat #{ticket.seat_number} is locked. Pass will activate for conductor inspection upon Admin approval.</span>
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
                     <div>
                       <div className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1">
@@ -319,14 +336,26 @@ export default function MyTickets({ onExploreRoutes }) {
                 </div>
                 <div>
                   <p className="text-slate-400 text-[10px] font-bold uppercase">Status & Fare</p>
-                  <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                    {previewQrTicket.status || 'CONFIRMED'}
-                  </span>
+                  {previewQrTicket.status === 'PENDING' ? (
+                    <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300 animate-pulse">
+                      ⏳ PENDING APPROVAL
+                    </span>
+                  ) : previewQrTicket.status === 'REJECTED' ? (
+                    <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-bold bg-red-100 text-red-800">
+                      ✕ REJECTED
+                    </span>
+                  ) : (
+                    <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                      ✓ CONFIRMED & ACTIVE
+                    </span>
+                  )}
                   <p className="font-extrabold text-emerald-700 text-sm mt-0.5">₹{previewQrTicket.amount_paid || previewQrTicket.price}</p>
                 </div>
               </div>
               <div className="text-[10px] text-slate-500 leading-tight">
-                Show this official digital QR pass to conductor during boarding inspection.
+                {previewQrTicket.status === 'PENDING'
+                  ? 'Pass is currently under review by Admin. Conductor verification activates once approved.'
+                  : 'Show this official digital QR pass to conductor during boarding inspection.'}
               </div>
             </div>
 
