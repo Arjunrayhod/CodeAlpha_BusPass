@@ -101,19 +101,19 @@ function AppContent() {
         />
       )}
 
-      {/* Floating Support Button (Only for Passengers and Visitors, Hidden for Admins) */}
+      {/* Floating Support Button (Compact Circular Icon - Never blocks GitHub or footer links) */}
       {!isAdmin && (
         <button
           onClick={() => setIsSupportOpen(true)}
-          className="fixed bottom-6 right-6 z-40 flex items-center gap-2.5 px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 group border-2 border-white/20 cursor-pointer"
-          title="Need Help? Ask a query"
+          className="fixed bottom-5 right-5 z-40 w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 transform hover:scale-110 active:scale-95 group border-2 border-white/30 cursor-pointer"
+          title="Need Help? Chat with Support"
+          aria-label="Help & Support"
         >
-          <div className="relative">
+          <div className="relative flex items-center justify-center">
             <MessageSquare className="w-5 h-5 group-hover:rotate-12 transition-transform" />
-            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full animate-ping" />
-            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full" />
+            <span className="absolute -top-1.5 -right-1.5 w-2.5 h-2.5 bg-emerald-400 rounded-full animate-ping" />
+            <span className="absolute -top-1.5 -right-1.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-slate-900" />
           </div>
-          <span className="text-xs font-bold tracking-wide pr-1">Help & Support</span>
         </button>
       )}
 
