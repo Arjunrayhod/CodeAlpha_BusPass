@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, User, CheckCircle, AlertCircle, ArrowRight, Download, QrCode, FileText, Bus, Sparkles, GraduationCap, Clock } from 'lucide-react';
+import { X, Calendar, User, Check, CheckCircle, AlertCircle, ArrowRight, Download, QrCode, FileText, Bus, Sparkles, GraduationCap, Clock } from 'lucide-react';
 import api, { API_BASE_URL } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
