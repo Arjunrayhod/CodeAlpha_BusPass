@@ -232,15 +232,16 @@ export default function MyTickets({ onExploreRoutes }) {
                     <span>View Pass</span>
                   </button>
 
-                  <button
-                    type="button"
-                    onClick={() => generateClientPassPdf(ticket)}
+                  <a
+                    href={`${API_BASE_URL}/api/ticket/pdf/${ticket.id}?download=1`}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="flex items-center justify-center gap-1.5 py-2 px-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-sm transition-colors cursor-pointer"
-                    title="Download Pass PDF File"
+                    title="Download / Open Pass PDF"
                   >
                     <FileText className="w-3.5 h-3.5" />
                     <span>PDF</span>
-                  </button>
+                  </a>
 
                   <button
                     onClick={() => handleCancelTicket(ticket.id, ticket.seat_number)}
@@ -331,14 +332,15 @@ export default function MyTickets({ onExploreRoutes }) {
 
             {/* 3 Action Options (Direct Download, Print/Save PDF, Save QR) */}
             <div className="space-y-2 pt-1">
-              <button
-                type="button"
-                onClick={() => generateClientPassPdf(previewQrTicket)}
+              <a
+                href={`${API_BASE_URL}/api/ticket/pdf/${previewQrTicket.id}?download=1`}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 shadow transition cursor-pointer"
               >
                 <FileText className="w-4 h-4" />
-                <span>Download Pass PDF (Instant Save)</span>
-              </button>
+                <span>Open / Download Pass PDF in Browser</span>
+              </a>
 
               <div className="grid grid-cols-2 gap-2">
                 <button
