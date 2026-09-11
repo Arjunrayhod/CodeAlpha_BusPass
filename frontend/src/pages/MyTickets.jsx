@@ -217,10 +217,11 @@ export default function MyTickets({ onExploreRoutes }) {
                 <div className="p-4 bg-slate-50/80 border-t border-slate-100 grid grid-cols-3 gap-2">
                   <button
                     onClick={() => setPreviewQrTicket(ticket)}
-                    className="flex items-center justify-center gap-1.5 py-2 px-2.5 bg-white hover:bg-slate-100 text-slate-700 font-semibold text-xs rounded-xl border border-slate-200 transition-colors shadow-sm"
+                    className="flex items-center justify-center gap-1.5 py-2 px-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-xl border border-indigo-200 transition-colors shadow-sm cursor-pointer"
+                    title="View Full E-Pass & Print"
                   >
-                    <QrCode className="w-3.5 h-3.5 text-blue-600" />
-                    <span>{t('view_qr')}</span>
+                    <QrCode className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>View Pass</span>
                   </button>
 
                   <a
@@ -228,8 +229,8 @@ export default function MyTickets({ onExploreRoutes }) {
                     target="_blank"
                     rel="noopener noreferrer"
                     download={`CloudBus_Pass_BP${String(ticket.id).padStart(6, '0')}.pdf`}
-                    className="flex items-center justify-center gap-1.5 py-2 px-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs rounded-xl shadow-sm transition-colors cursor-pointer"
-                    title="Download Pass PDF"
+                    className="flex items-center justify-center gap-1.5 py-2 px-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-sm transition-colors cursor-pointer"
+                    title="Download Pass PDF File"
                   >
                     <FileText className="w-3.5 h-3.5" />
                     <span>PDF</span>
@@ -251,45 +252,112 @@ export default function MyTickets({ onExploreRoutes }) {
         </div>
       )}
 
-      {/* QR Modal Preview */}
+      {/* Full Digital E-Pass & QR Modal (Printable / Save as PDF) */}
       {previewQrTicket && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl border border-slate-100">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-              <div className="text-left">
-                <h3 className="font-bold text-base text-slate-900">Digital QR Pass</h3>
-                <p className="text-[11px] text-slate-500">#BP-{String(previewQrTicket.id).padStart(6, '0')}</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/80 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white rounded-3xl max-w-md w-full max-h-[92vh] overflow-y-auto p-5 sm:p-6 text-center space-y-4 shadow-2xl border border-slate-200">
+            
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="text-left flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold">
+                  <Bus className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-sm sm:text-base text-slate-900">CloudBus Digital E-Pass</h3>
+                  <p className="text-[10px] text-slate-500 font-mono">#BP-{String(previewQrTicket.id).padStart(6, '0')}</p>
+                </div>
               </div>
               <button
                 onClick={() => setPreviewQrTicket(null)}
-                className="p-1 text-slate-400 hover:text-slate-700 rounded-lg"
+                className="p-1.5 text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 inline-block shadow-inner">
+            {/* Official Pass Badge */}
+            <div className="bg-gradient-to-r from-blue-700 to-indigo-800 text-white p-4 rounded-2xl space-y-1 shadow-md">
+              <span className="inline-block px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-white/20 text-white border border-white/30">
+                {previewQrTicket.pass_type || 'SINGLE JOURNEY'} PASS
+              </span>
+              <div className="text-base sm:text-lg font-black flex items-center justify-center gap-2">
+                <span>{previewQrTicket.source}</span>
+                <span className="text-blue-300">➔</span>
+                <span>{previewQrTicket.destination}</span>
+              </div>
+              <div className="text-xs text-blue-200 flex items-center justify-center gap-3 pt-1">
+                <span>Date: <b className="text-white">{previewQrTicket.travel_date}</b></span>
+                <span>•</span>
+                <span>Seat: <b className="text-emerald-300 font-black">#{previewQrTicket.seat_number}</b></span>
+              </div>
+            </div>
+
+            {/* QR Code Container */}
+            <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 inline-block shadow-inner">
               <img
                 src={`${API_BASE_URL}/api/ticket/qr/${previewQrTicket.id}`}
                 alt="Ticket QR Code"
-                className="w-48 h-48 mx-auto rounded-lg object-contain"
+                className="w-44 h-44 sm:w-48 sm:h-48 mx-auto rounded-xl object-contain"
               />
             </div>
 
-            <div className="text-xs text-slate-600 space-y-1">
-              <div className="font-bold text-slate-800">{previewQrTicket.source} ➔ {previewQrTicket.destination}</div>
-              <div>Travel Date: <b className="text-blue-600">{previewQrTicket.travel_date}</b> | Seat: <b className="text-emerald-600">#{previewQrTicket.seat_number}</b></div>
-              <p className="text-[10px] text-slate-400 pt-1">Show this QR code to the bus conductor for instant validation.</p>
+            {/* Passenger & Ticket Information Grid */}
+            <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 text-left text-xs space-y-2">
+              <div className="grid grid-cols-2 gap-2 pb-2 border-b border-slate-200">
+                <div>
+                  <p className="text-slate-400 text-[10px] font-bold uppercase">Passenger</p>
+                  <p className="font-bold text-slate-900">{previewQrTicket.user_name}</p>
+                  <p className="text-[10px] text-slate-500">{previewQrTicket.user_email}</p>
+                </div>
+                <div>
+                  <p className="text-slate-400 text-[10px] font-bold uppercase">Status & Fare</p>
+                  <span className="inline-block px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                    {previewQrTicket.status || 'CONFIRMED'}
+                  </span>
+                  <p className="font-extrabold text-emerald-700 text-sm mt-0.5">₹{previewQrTicket.amount_paid || previewQrTicket.price}</p>
+                </div>
+              </div>
+              <div className="text-[10px] text-slate-500 leading-tight">
+                Show this official digital QR pass to conductor during boarding inspection.
+              </div>
             </div>
 
-            <a
-              href={`${API_BASE_URL}/api/ticket/qr/${previewQrTicket.id}`}
-              download={`ticket_qr_${previewQrTicket.id}.png`}
-              className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-medium text-xs rounded-xl flex items-center justify-center gap-2 transition-colors"
-            >
-              <Download className="w-4 h-4" />
-              Save QR Image
-            </a>
+            {/* 3 Action Options (Direct Download, Print/Save PDF, Save QR) */}
+            <div className="space-y-2 pt-1">
+              <a
+                href={`${API_BASE_URL}/api/ticket/pdf/${previewQrTicket.id}?download=1`}
+                target="_blank"
+                rel="noopener noreferrer"
+                download={`CloudBus_Pass_BP${String(previewQrTicket.id).padStart(6, '0')}.pdf`}
+                className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 shadow transition cursor-pointer"
+              >
+                <FileText className="w-4 h-4" />
+                <span>Download Pass PDF File</span>
+              </a>
+
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-xl border border-indigo-200 flex items-center justify-center gap-1.5 transition cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Print / Save PDF</span>
+                </button>
+
+                <a
+                  href={`${API_BASE_URL}/api/ticket/qr/${previewQrTicket.id}`}
+                  download={`ticket_qr_${previewQrTicket.id}.png`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 flex items-center justify-center gap-1.5 transition cursor-pointer"
+                >
+                  <QrCode className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Save QR Image</span>
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       )}
