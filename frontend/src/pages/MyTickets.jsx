@@ -223,15 +223,17 @@ export default function MyTickets({ onExploreRoutes }) {
                     <span>{t('view_qr')}</span>
                   </button>
 
-                  <button
-                    type="button"
-                    onClick={() => downloadTicketPdf(ticket.id)}
+                  <a
+                    href={`${API_BASE_URL}/api/ticket/pdf/${ticket.id}?download=1`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    download={`CloudBus_Pass_BP${String(ticket.id).padStart(6, '0')}.pdf`}
                     className="flex items-center justify-center gap-1.5 py-2 px-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs rounded-xl shadow-sm transition-colors cursor-pointer"
                     title="Download Pass PDF"
                   >
                     <FileText className="w-3.5 h-3.5" />
                     <span>PDF</span>
-                  </button>
+                  </a>
 
                   <button
                     onClick={() => handleCancelTicket(ticket.id, ticket.seat_number)}

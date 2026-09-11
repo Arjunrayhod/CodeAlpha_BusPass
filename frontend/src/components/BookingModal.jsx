@@ -175,14 +175,16 @@ export default function BookingModal({ route, onClose, onSuccess, onNavigateLogi
 
               {/* Action Buttons for Download */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => downloadTicketPdf(bookedTicket.id)}
+                <a
+                  href={`${API_BASE_URL}/api/ticket/pdf/${bookedTicket.id}?download=1`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  download={`CloudBus_Pass_BP${String(bookedTicket.id).padStart(6, '0')}.pdf`}
                   className="flex items-center justify-center gap-2 py-2.5 px-4 bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs rounded-xl shadow transition-colors cursor-pointer"
                 >
                   <FileText className="w-4 h-4" />
                   Download PDF Pass
-                </button>
+                </a>
 
                 <a
                   href={`${API_BASE_URL}/api/ticket/qr/${bookedTicket.id}`}
