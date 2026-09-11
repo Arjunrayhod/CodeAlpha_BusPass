@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Ticket, Calendar, Clock, MapPin, Download, QrCode, FileText, X, ArrowRight, Bus, WifiOff, Sparkles, GraduationCap, Trash2, CheckCircle2, AlertCircle } from 'lucide-react';
 import api, { API_BASE_URL } from '../api';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { downloadTicketPdf, openTicketPdfInBrowser, copyPdfLinkToClipboard, downloadQrImage, generateClientPassPdf } from '../utils/download';
 
 export default function MyTickets({ onExploreRoutes }) {
