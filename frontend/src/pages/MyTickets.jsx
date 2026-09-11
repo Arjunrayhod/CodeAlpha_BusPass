@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Ticket, Calendar, Clock, MapPin, Download, QrCode, FileText, X, ArrowRight, Bus, WifiOff, Sparkles, GraduationCap, Trash2, CheckCircle2, AlertCircle } from 'lucide-react';
 import api, { API_BASE_URL } from '../api';
 import { useAuth } from '../context/AuthContext';
-import { useLanguage } from '../context/LanguageContext';
-import { downloadTicketPdf, openTicketPdfInBrowser, copyPdfLinkToClipboard } from '../utils/download';
+import { downloadTicketPdf, openTicketPdfInBrowser, copyPdfLinkToClipboard, downloadQrImage, generateClientPassPdf } from '../utils/download';
 
 export default function MyTickets({ onExploreRoutes }) {
   const { user } = useAuth();
@@ -15,6 +14,7 @@ export default function MyTickets({ onExploreRoutes }) {
   const [isOfflineMode, setIsOfflineMode] = useState(false);
   const [previewQrTicket, setPreviewQrTicket] = useState(null);
   const [cancellingId, setCancellingId] = useState(null);
+  const [isCopied, setIsCopied] = useState(false);
 
   const fetchTickets = async () => {
     setLoading(true);
@@ -358,18 +358,77 @@ export default function MyTickets({ onExploreRoutes }) {
               </div>
             </div>
 
-            {/* Action Options (Direct Download, Open in Browser, Print/Save PDF, Copy Link) */}
-            <div className="space-y-2 pt-1">
+            {/* 3-Step Navigation & Download Guide Card */}
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-3.5 rounded-2xl border border-blue-200 text-left space-y-2 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="font-extrabold text-blue-900 flex items-center gap-1.5 text-xs">
+                  <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Phone PDF Download Guide</span>
+                </span>
+                <span className="px-2 py-0.5 bg-blue-600 text-white rounded-full text-[9px] font-bold">100% Working</span>
+              </div>
+              <div className="grid grid-cols-3 gap-1.5 text-[10px] text-slate-700 font-medium pt-1">
+                <div className="bg-white p-2 rounded-xl border border-blue-100 text-center">
+                  <span className="block font-bold text-blue-600">Step 1</span>
+                  Click "Copy PDF Link"
+                </div>
+                <div className="bg-white p-2 rounded-xl border border-blue-100 text-center">
+                  <span className="block font-bold text-indigo-600">Step 2</span>
+                  Open Phone Chrome
+                </div>
+                <div className="bg-white p-2 rounded-xl border border-blue-100 text-center">
+                  <span className="block font-bold text-emerald-600">Step 3</span>
+                  Paste & Download
+                </div>
+              </div>
+
+              {/* 1-Click Copy PDF Link Button */}
               <button
                 type="button"
-                onClick={() => downloadTicketPdf(previewQrTicket.id)}
-                className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-sm rounded-xl flex items-center justify-center gap-2 shadow-md transition cursor-pointer"
+                onClick={async () => {
+                  const ok = await copyPdfLinkToClipboard(previewQrTicket.id);
+                  if (ok) {
+                    setIsCopied(true);
+                    setSuccessMsg('PDF Link Copied! Open Chrome and paste in search bar.');
+                    setTimeout(() => {
+                      setIsCopied(false);
+                      setSuccessMsg('');
+                    }, 4000);
+                  }
+                }}
+                className={`w-full py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition cursor-pointer ${
+                  isCopied
+                    ? 'bg-emerald-600 text-white shadow-emerald-500/30'
+                    : 'bg-gradient-to-r from-blue-600 to-indigo-700 text-white hover:opacity-95'
+                }`}
               >
-                <Download className="w-4 h-4" />
-                <span>Download Pass PDF</span>
+                {isCopied ? (
+                  <>
+                    <CheckCircle2 className="w-4 h-4 text-emerald-200" />
+                    <span>✓ PDF Link Copied! (Now Paste in Chrome)</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 text-amber-300" />
+                    <span>📋 Copy PDF Download Link</span>
+                  </>
+                )}
               </button>
+            </div>
 
+            {/* In-App Alternative Download & Save Options */}
+            <div className="space-y-2 pt-1">
               <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => generateClientPassPdf(previewQrTicket)}
+                  className="py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-900 font-bold text-xs rounded-xl border border-amber-300 flex items-center justify-center gap-1.5 transition cursor-pointer"
+                  title="Generate PDF directly on phone device"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                  <span>⚡ Instant PDF Generator</span>
+                </button>
+
                 <button
                   type="button"
                   onClick={() => openTicketPdfInBrowser(previewQrTicket.id)}
@@ -378,42 +437,26 @@ export default function MyTickets({ onExploreRoutes }) {
                   <FileText className="w-3.5 h-3.5 text-blue-600" />
                   <span>Open in Browser</span>
                 </button>
-
-                <button
-                  type="button"
-                  onClick={async () => {
-                    const ok = await copyPdfLinkToClipboard(previewQrTicket.id);
-                    if (ok) {
-                      setSuccessMsg('PDF Link Copied! You can paste in Chrome to download anytime.');
-                      setTimeout(() => setSuccessMsg(''), 4000);
-                    }
-                  }}
-                  className="py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs rounded-xl border border-emerald-200 flex items-center justify-center gap-1.5 transition cursor-pointer"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Copy PDF Link</span>
-                </button>
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
-                  onClick={() => window.print()}
-                  className="py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-xl border border-indigo-200 flex items-center justify-center gap-1.5 transition cursor-pointer"
+                  onClick={() => downloadQrImage(previewQrTicket.id)}
+                  className="py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl border border-slate-200 flex items-center justify-center gap-1.5 transition cursor-pointer"
+                  title="Download Clean QR Code Image (.PNG)"
                 >
-                  <FileText className="w-3.5 h-3.5" />
-                  <span>Print / Save PDF</span>
+                  <QrCode className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Save QR (.PNG)</span>
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => {
-                    window.location.href = `${API_BASE_URL}/api/ticket/qr/${previewQrTicket.id}`;
-                  }}
-                  className="py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 flex items-center justify-center gap-1.5 transition cursor-pointer"
+                  onClick={() => window.print()}
+                  className="py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-xl border border-indigo-200 flex items-center justify-center gap-1.5 transition cursor-pointer"
                 >
-                  <QrCode className="w-3.5 h-3.5 text-blue-600" />
-                  <span>Save QR Image</span>
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Print / Save PDF</span>
                 </button>
               </div>
             </div>
