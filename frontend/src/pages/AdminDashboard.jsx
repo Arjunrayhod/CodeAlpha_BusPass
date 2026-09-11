@@ -9,7 +9,7 @@ import AnalyticsCharts from '../components/AnalyticsCharts';
 import QRScannerModal from '../components/QRScannerModal';
 import AdminSupportMessenger from '../components/AdminSupportMessenger';
 import { useLanguage } from '../context/LanguageContext';
-import { downloadTicketPdf } from '../utils/download';
+import { downloadTicketPdf, generateClientPassPdf } from '../utils/download';
 
 export default function AdminDashboard() {
   const { t } = useLanguage();
@@ -464,17 +464,15 @@ export default function AdminDashboard() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <a
-                      href={`${API_BASE_URL}/api/ticket/pdf/${b.id}?download=1`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      download={`CloudBus_Pass_BP${String(b.id).padStart(6, '0')}.pdf`}
+                    <button
+                      type="button"
+                      onClick={() => generateClientPassPdf(b)}
                       className="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl flex items-center gap-1 shadow-sm cursor-pointer"
                       title="Download PDF Pass"
                     >
                       <FileText className="w-3.5 h-3.5" />
                       <span>PDF</span>
-                    </a>
+                    </button>
                     <a
                       href={`${API_BASE_URL}/api/ticket/qr/${b.id}`}
                       target="_blank"
@@ -550,16 +548,14 @@ export default function AdminDashboard() {
                         >
                           <QrCode className="w-3.5 h-3.5 text-blue-600" />
                         </a>
-                        <a
-                          href={`${API_BASE_URL}/api/ticket/pdf/${b.id}?download=1`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          download={`CloudBus_Pass_BP${String(b.id).padStart(6, '0')}.pdf`}
+                        <button
+                          type="button"
+                          onClick={() => generateClientPassPdf(b)}
                           className="inline-block p-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg cursor-pointer"
                           title="Download PDF"
                         >
                           <FileText className="w-3.5 h-3.5" />
-                        </a>
+                        </button>
                         <button
                           onClick={() => handleCancelBooking(b.id)}
                           className="inline-block p-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors cursor-pointer"
