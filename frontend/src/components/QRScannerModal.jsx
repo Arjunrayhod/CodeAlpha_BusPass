@@ -21,6 +21,16 @@ export default function QRScannerModal({ onClose }) {
   const startScanner = async () => {
     setCameraError('');
     try {
+      // 1. Explicitly probe standard navigator.mediaDevices prompt to trigger browser permission modal
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+          stream.getTracks().forEach(track => track.stop());
+        } catch (mediaErr) {
+          console.warn("Direct getUserMedia probe result:", mediaErr);
+        }
+      }
+
       if (!html5QrCodeRef.current) {
         html5QrCodeRef.current = new Html5Qrcode("qr-camera-viewport");
       }
@@ -31,40 +41,39 @@ export default function QRScannerModal({ onClose }) {
         aspectRatio: 1.0
       };
 
-      await html5QrCodeRef.current.start(
-        { facingMode: "environment" },
-        config,
-        (decodedText) => {
-          handleQRDecoded(decodedText);
-        },
-        (errorMessage) => {
-          // ignore transient frame decode errors
-        }
-      );
-      setIsScanning(true);
-    } catch (err) {
-      console.warn("Camera start failed, falling back to camera selection:", err);
-      // Try getting available cameras
       try {
-        const devices = await Html5Qrcode.getCameras();
-        if (devices && devices.length > 0) {
-          // Pick the back camera if possible, or first available
-          const backCamera = devices.find(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('rear')) || devices[0];
-          await html5QrCodeRef.current.start(
-            backCamera.id,
-            { fps: 15, qrbox: { width: 220, height: 220 }, aspectRatio: 1.0 },
-            (decodedText) => handleQRDecoded(decodedText),
-            () => {}
-          );
-          setIsScanning(true);
-          return;
-        }
-      } catch (deviceErr) {
-        console.error("Camera listing error:", deviceErr);
+        await html5QrCodeRef.current.start(
+          { facingMode: "environment" },
+          config,
+          (decodedText) => {
+            handleQRDecoded(decodedText);
+          },
+          () => {}
+        );
+        setIsScanning(true);
+        return;
+      } catch (errFacing) {
+        console.warn("facingMode failed, trying getCameras list:", errFacing);
       }
 
+      const devices = await Html5Qrcode.getCameras();
+      if (devices && devices.length > 0) {
+        const backCamera = devices.find(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('rear')) || devices[0];
+        await html5QrCodeRef.current.start(
+          backCamera.id,
+          config,
+          (decodedText) => handleQRDecoded(decodedText),
+          () => {}
+        );
+        setIsScanning(true);
+        return;
+      }
+
+      throw new Error("No active camera detected");
+    } catch (err) {
+      console.warn("Camera start failed completely:", err);
       setCameraError(
-        'Camera permission was denied or camera is not available. Please allow camera access or use the "Upload QR Image" option below.'
+        'Camera permission was not granted by the phone OS or browser. Please allow Camera access or use "Upload QR Image".'
       );
       setIsScanning(false);
     }
