@@ -3,7 +3,7 @@ import { Ticket, Calendar, Clock, MapPin, Download, QrCode, FileText, X, ArrowRi
 import api, { API_BASE_URL } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { downloadTicketPdf, generateClientPassPdf } from '../utils/download';
+import { downloadTicketPdf, openTicketPdfInBrowser, copyPdfLinkToClipboard } from '../utils/download';
 
 export default function MyTickets({ onExploreRoutes }) {
   const { user } = useAuth();
@@ -249,16 +249,15 @@ export default function MyTickets({ onExploreRoutes }) {
                     <span>View Pass</span>
                   </button>
 
-                  <a
-                    href={`${API_BASE_URL}/api/ticket/pdf/${ticket.id}?download=1`}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    type="button"
+                    onClick={() => downloadTicketPdf(ticket.id)}
                     className="flex items-center justify-center gap-1.5 py-2 px-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-sm transition-colors cursor-pointer"
-                    title="Download / Open Pass PDF"
+                    title="Download Pass PDF"
                   >
                     <FileText className="w-3.5 h-3.5" />
                     <span>PDF</span>
-                  </a>
+                  </button>
 
                   <button
                     onClick={() => handleCancelTicket(ticket.id, ticket.seat_number)}
@@ -359,17 +358,42 @@ export default function MyTickets({ onExploreRoutes }) {
               </div>
             </div>
 
-            {/* 3 Action Options (Direct Download, Print/Save PDF, Save QR) */}
+            {/* Action Options (Direct Download, Open in Browser, Print/Save PDF, Copy Link) */}
             <div className="space-y-2 pt-1">
-              <a
-                href={`${API_BASE_URL}/api/ticket/pdf/${previewQrTicket.id}?download=1`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 shadow transition cursor-pointer"
+              <button
+                type="button"
+                onClick={() => downloadTicketPdf(previewQrTicket.id)}
+                className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-sm rounded-xl flex items-center justify-center gap-2 shadow-md transition cursor-pointer"
               >
-                <FileText className="w-4 h-4" />
-                <span>Open / Download Pass PDF in Browser</span>
-              </a>
+                <Download className="w-4 h-4" />
+                <span>Download Pass PDF</span>
+              </button>
+
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => openTicketPdfInBrowser(previewQrTicket.id)}
+                  className="py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl border border-slate-200 flex items-center justify-center gap-1.5 transition cursor-pointer"
+                >
+                  <FileText className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Open in Browser</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const ok = await copyPdfLinkToClipboard(previewQrTicket.id);
+                    if (ok) {
+                      setSuccessMsg('PDF Link Copied! You can paste in Chrome to download anytime.');
+                      setTimeout(() => setSuccessMsg(''), 4000);
+                    }
+                  }}
+                  className="py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs rounded-xl border border-emerald-200 flex items-center justify-center gap-1.5 transition cursor-pointer"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Copy PDF Link</span>
+                </button>
+              </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <button
@@ -377,20 +401,20 @@ export default function MyTickets({ onExploreRoutes }) {
                   onClick={() => window.print()}
                   className="py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-xl border border-indigo-200 flex items-center justify-center gap-1.5 transition cursor-pointer"
                 >
-                  <Download className="w-3.5 h-3.5" />
+                  <FileText className="w-3.5 h-3.5" />
                   <span>Print / Save PDF</span>
                 </button>
 
-                <a
-                  href={`${API_BASE_URL}/api/ticket/qr/${previewQrTicket.id}`}
-                  download={`ticket_qr_${previewQrTicket.id}.png`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.location.href = `${API_BASE_URL}/api/ticket/qr/${previewQrTicket.id}`;
+                  }}
                   className="py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 flex items-center justify-center gap-1.5 transition cursor-pointer"
                 >
                   <QrCode className="w-3.5 h-3.5 text-blue-600" />
                   <span>Save QR Image</span>
-                </a>
+                </button>
               </div>
             </div>
           </div>
