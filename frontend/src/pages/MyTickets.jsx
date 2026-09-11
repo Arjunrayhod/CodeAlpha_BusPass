@@ -3,6 +3,7 @@ import { Ticket, Calendar, Clock, MapPin, Download, QrCode, FileText, X, ArrowRi
 import api, { API_BASE_URL } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { downloadTicketPdf } from '../utils/download';
 
 export default function MyTickets({ onExploreRoutes }) {
   const { user } = useAuth();
@@ -222,15 +223,15 @@ export default function MyTickets({ onExploreRoutes }) {
                     <span>{t('view_qr')}</span>
                   </button>
 
-                  <a
-                    href={`${API_BASE_URL}/api/ticket/pdf/${ticket.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-1.5 py-2 px-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs rounded-xl shadow-sm transition-colors"
+                  <button
+                    type="button"
+                    onClick={() => downloadTicketPdf(ticket.id)}
+                    className="flex items-center justify-center gap-1.5 py-2 px-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs rounded-xl shadow-sm transition-colors cursor-pointer"
+                    title="Download Pass PDF"
                   >
                     <FileText className="w-3.5 h-3.5" />
                     <span>PDF</span>
-                  </a>
+                  </button>
 
                   <button
                     onClick={() => handleCancelTicket(ticket.id, ticket.seat_number)}

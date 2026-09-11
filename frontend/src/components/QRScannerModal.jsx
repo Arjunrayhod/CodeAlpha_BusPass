@@ -194,18 +194,18 @@ export default function QRScannerModal({ onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-white rounded-3xl max-w-lg w-full max-h-[92vh] overflow-y-auto flex flex-col shadow-2xl border border-slate-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/80 backdrop-blur-sm animate-fadeIn">
+      <div className="bg-white rounded-3xl max-w-md w-full max-h-[92vh] overflow-y-auto flex flex-col shadow-2xl border border-slate-200">
         
         {/* Header */}
-        <div className="p-5 bg-gradient-to-r from-blue-700 to-indigo-800 text-white flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center">
+        <div className="p-4 sm:p-5 bg-gradient-to-r from-blue-700 to-indigo-800 text-white flex items-center justify-between">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center">
               <QrCode className="w-5 h-5 text-blue-200" />
             </div>
             <div>
-              <h3 className="font-bold text-lg">{t('scanner_title')}</h3>
-              <p className="text-[11px] text-blue-200">{t('scanner_sub')}</p>
+              <h3 className="font-bold text-base sm:text-lg">{t('scanner_title')}</h3>
+              <p className="text-[10px] sm:text-[11px] text-blue-200">{t('scanner_sub')}</p>
             </div>
           </div>
           <button
@@ -216,7 +216,7 @@ export default function QRScannerModal({ onClose }) {
           </button>
         </div>
 
-        <div className="p-6 space-y-5">
+        <div className="p-4 sm:p-6 space-y-4 sm:space-y-5">
           
           {/* Manual Reference Search */}
           <form onSubmit={handleManualSearch} className="flex gap-2">
@@ -272,19 +272,19 @@ export default function QRScannerModal({ onClose }) {
           {/* Camera Viewport Area */}
           {!verificationResult && activeTab === 'camera' && (
             <div className="space-y-3">
-              <div className="relative rounded-2xl overflow-hidden bg-slate-950 aspect-square flex items-center justify-center border-2 border-slate-800 shadow-inner">
+              <div className="relative rounded-2xl overflow-hidden bg-slate-950 aspect-square max-w-[280px] sm:max-w-[320px] mx-auto flex items-center justify-center border-2 border-slate-800 shadow-inner">
                 {/* HTML5 QR Code Container */}
                 <div id="qr-camera-viewport" className="w-full h-full flex items-center justify-center"></div>
 
                 {/* Animated Scanner Laser Overlay when camera is active */}
                 {isScanning && !cameraError && (
                   <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center">
-                    <div className="w-48 h-48 border-2 border-blue-400/80 rounded-2xl relative">
-                      <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-blue-400 rounded-tl"></div>
-                      <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-blue-400 rounded-tr"></div>
-                      <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-blue-400 rounded-bl"></div>
-                      <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-blue-400 rounded-br"></div>
-                      <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_8px_cyan] animate-bounce mt-24"></div>
+                    <div className="w-40 h-40 border-2 border-blue-400/80 rounded-2xl relative">
+                      <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-blue-400 rounded-tl"></div>
+                      <div className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-blue-400 rounded-tr"></div>
+                      <div className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-blue-400 rounded-bl"></div>
+                      <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-blue-400 rounded-br"></div>
+                      <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_8px_cyan] animate-bounce mt-20"></div>
                     </div>
                   </div>
                 )}
