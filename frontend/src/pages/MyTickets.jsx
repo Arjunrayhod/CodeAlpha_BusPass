@@ -29,13 +29,21 @@ export default function MyTickets({ onExploreRoutes }) {
         localStorage.setItem('cloudbus_offline_tickets', JSON.stringify(liveTickets));
       }
     } catch (err) {
-      // Fallback to offline cached passes
-      const cached = localStorage.getItem('cloudbus_offline_tickets');
-      if (cached) {
-        setTickets(JSON.parse(cached));
-        setIsOfflineMode(true);
+      if (err.response && err.response.status === 401) {
+        setError('Login session expired. Please Log Out and Log In again to sync live passes.');
       } else {
-        setError('Unable to load your bus passes. Please check backend connection.');
+        // Fallback to offline cached passes only if network actually failed
+        const cached = localStorage.getItem('cloudbus_offline_tickets');
+        if (cached) {
+          try {
+            setTickets(JSON.parse(cached));
+            setIsOfflineMode(true);
+          } catch {
+            setError('Unable to load passes. Please check your connection.');
+          }
+        } else {
+          setError(err.response?.data?.error || 'Unable to connect to live server. Please tap Refresh.');
+        }
       }
     } finally {
       setLoading(false);
