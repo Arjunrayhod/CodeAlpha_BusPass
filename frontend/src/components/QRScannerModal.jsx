@@ -21,7 +21,20 @@ export default function QRScannerModal({ onClose }) {
   const startScanner = async () => {
     setCameraError('');
     try {
-      // 1. Explicitly probe standard navigator.mediaDevices prompt to trigger browser permission modal
+      // 1. Clean up existing scanner instance if any
+      if (html5QrCodeRef.current) {
+        try {
+          if (html5QrCodeRef.current.isScanning) {
+            await html5QrCodeRef.current.stop();
+          }
+          await html5QrCodeRef.current.clear();
+        } catch (e) {
+          console.warn("Previous scanner cleanup:", e);
+        }
+        html5QrCodeRef.current = null;
+      }
+
+      // 2. Explicitly probe standard navigator.mediaDevices prompt to trigger browser/Android permission modal
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
@@ -31,9 +44,14 @@ export default function QRScannerModal({ onClose }) {
         }
       }
 
-      if (!html5QrCodeRef.current) {
-        html5QrCodeRef.current = new Html5Qrcode("qr-camera-viewport");
+      // Check if container element exists in DOM
+      const viewportElem = document.getElementById("qr-camera-viewport");
+      if (!viewportElem) {
+        console.warn("Viewport element not in DOM yet");
+        return;
       }
+
+      html5QrCodeRef.current = new Html5Qrcode("qr-camera-viewport");
       
       const config = {
         fps: 15,
@@ -73,19 +91,23 @@ export default function QRScannerModal({ onClose }) {
     } catch (err) {
       console.warn("Camera start failed completely:", err);
       setCameraError(
-        'Camera permission was not granted by the phone OS or browser. Please allow Camera access or use "Upload QR Image".'
+        'Camera permission was not granted by the phone OS or browser. Please allow Camera access in Phone Settings/Browser, or use "Upload QR Image".'
       );
       setIsScanning(false);
     }
   };
 
   const stopScanner = async () => {
-    if (html5QrCodeRef.current && html5QrCodeRef.current.isScanning) {
+    if (html5QrCodeRef.current) {
       try {
-        await html5QrCodeRef.current.stop();
+        if (html5QrCodeRef.current.isScanning) {
+          await html5QrCodeRef.current.stop();
+        }
+        await html5QrCodeRef.current.clear();
       } catch (err) {
-        console.error("Error stopping scanner:", err);
+        console.warn("Error stopping scanner:", err);
       }
+      html5QrCodeRef.current = null;
     }
     setIsScanning(false);
   };

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, MapPin, Bus, Sparkles, Shield, Clock, Award, Navigation, GraduationCap, QrCode } from 'lucide-react';
+import { Search, MapPin, Bus, Sparkles, Shield, Clock, Award, Navigation, GraduationCap, QrCode, Smartphone, Download, CheckCircle2, Github } from 'lucide-react';
 import RouteCard from '../components/RouteCard';
 import LiveRouteMap from '../components/LiveRouteMap';
 import api from '../api';
@@ -42,9 +42,20 @@ export default function Home({ onSelectRoute, onOpenScanner }) {
       {/* Hero Banner */}
       <section className="relative overflow-hidden bg-gradient-to-br from-blue-900 via-indigo-950 to-slate-950 text-white rounded-3xl p-5 sm:p-12 shadow-2xl border border-blue-800/40">
         <div className="relative z-10 max-w-3xl space-y-3 sm:space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-300 text-[11px] sm:text-xs font-semibold">
-            <Sparkles className="w-3.5 h-3.5 text-blue-300" />
-            <span>{t('brand_name')} • Smart Transit Network</span>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-300 text-[11px] sm:text-xs font-semibold">
+              <Sparkles className="w-3.5 h-3.5 text-blue-300" />
+              <span>{t('brand_name')} • Smart Transit Network</span>
+            </div>
+
+            <a
+              href="/CloudBus.apk"
+              download="CloudBus.apk"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-emerald-300 hover:text-emerald-200 text-[11px] sm:text-xs font-bold transition shadow-sm"
+            >
+              <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Download Android App (.APK)</span>
+            </a>
           </div>
           
           <h1 className="text-2xl sm:text-5xl font-black tracking-tight leading-tight">
@@ -175,6 +186,52 @@ export default function Home({ onSelectRoute, onOpenScanner }) {
             ))}
           </div>
         )}
+      </section>
+
+      {/* Android Mobile App Showcase Banner */}
+      <section className="relative overflow-hidden bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-blue-800/40">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+          
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-blue-600/30 border border-blue-400/40 p-2 shrink-0 shadow-lg flex items-center justify-center">
+              <img src="/logo.png" alt="CloudBus Logo" className="w-full h-full object-contain rounded-2xl" onError={(e) => { e.target.style.display = 'none'; }} />
+              <Smartphone className="w-8 h-8 text-blue-300" style={{ display: 'none' }} />
+            </div>
+
+            <div className="space-y-1 text-left">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-400/30">
+                Official Android App v2.0
+              </div>
+              <h3 className="text-lg sm:text-2xl font-black tracking-tight text-white">
+                Get CloudBus on Your Android Phone
+              </h3>
+              <p className="text-xs text-slate-300 max-w-md">
+                Fast ticket booking, instant QR verification, offline passes & smooth travel experience.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-start md:justify-end">
+            <a
+              href="/CloudBus.apk"
+              download="CloudBus.apk"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white text-xs font-bold rounded-2xl shadow-lg shadow-emerald-500/20 transition-all hover:scale-105 cursor-pointer"
+            >
+              <Download className="w-4 h-4" />
+              <span>Download APK (Direct)</span>
+            </a>
+
+            <a
+              href="https://github.com/Arjunrayhod/BusPass-Android"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-3 bg-slate-800/80 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-bold rounded-2xl border border-slate-700 transition cursor-pointer"
+            >
+              <Github className="w-4 h-4" />
+              <span>GitHub Repo</span>
+            </a>
+          </div>
+        </div>
       </section>
 
       {/* Live Route Map Modal */}

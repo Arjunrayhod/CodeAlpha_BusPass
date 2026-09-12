@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bus, Ticket, ShieldCheck, LogIn, LogOut, Menu, X, Globe, ScanLine, Languages } from 'lucide-react';
+import { Bus, Ticket, ShieldCheck, LogIn, LogOut, Menu, X, Globe, ScanLine, Languages, Smartphone } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -86,6 +86,18 @@ export default function Navbar({ currentView, setCurrentView, onOpenScanner }) {
                 <span>{t('nav_scanner')}</span>
               </button>
             )}
+
+            {/* Download Android App Button */}
+            <a
+              href="/CloudBus.apk"
+              download="CloudBus.apk"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-600/20 transition cursor-pointer"
+              title="Download Android App APK"
+            >
+              <Smartphone className="w-3.5 h-3.5" />
+              <span className="hidden lg:inline">Download App</span>
+              <span className="lg:hidden">App</span>
+            </a>
 
             {/* Language Switcher Button (EN / हिन्दी) */}
             <button
@@ -189,6 +201,15 @@ export default function Navbar({ currentView, setCurrentView, onOpenScanner }) {
               <span>{t('nav_scanner')}</span>
             </button>
           )}
+          <a
+            href="/CloudBus.apk"
+            download="CloudBus.apk"
+            onClick={() => setMobileMenuOpen(false)}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-emerald-400 bg-emerald-950/40 border border-emerald-800/60 hover:bg-emerald-900/50 cursor-pointer"
+          >
+            <Smartphone className="w-4 h-4 text-emerald-400" />
+            <span>📲 Download Android App (.APK)</span>
+          </a>
           <div className="pt-3 border-t border-slate-800">
             {user ? (
               <div className="flex items-center justify-between">
