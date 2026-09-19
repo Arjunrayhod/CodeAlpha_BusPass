@@ -1,7 +1,7 @@
 ﻿import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Bell, Volume2, VolumeX, Mic, Play, CheckCircle2, Ticket, 
-  Trash2, X, AlertCircle, Smartphone, Radio, Sparkles
+  Bell, Volume2, VolumeX, Play, CheckCircle2, Ticket, 
+  Trash2, X, AlertCircle, Smartphone, Radio, Sparkles, Zap
 } from 'lucide-react';
 import { 
   triggerAdminBookingAlert, 
@@ -30,7 +30,7 @@ export default function AdminNotificationCenter({ bookings = [], onSelectBooking
   const [activeToast, setActiveToast] = useState(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
 
-  // Track initial bookings to avoid alerting for old existing bookings on first load
+  // Track initial bookings
   const knownBookingIdsRef = useRef(new Set());
   const isFirstLoadRef = useRef(true);
 
@@ -49,7 +49,7 @@ export default function AdminNotificationCenter({ bookings = [], onSelectBooking
     } catch (_) {}
   }, [notifications]);
 
-  // Request browser notification permission if not yet decided
+  // Request browser notification permission
   useEffect(() => {
     if (typeof window !== 'undefined' && 'Notification' in window) {
       if (Notification.permission === 'default') {
@@ -58,17 +58,36 @@ export default function AdminNotificationCenter({ bookings = [], onSelectBooking
     }
   }, []);
 
-  // Detect newly booked tickets from bookings list
+  // Populate initial recent bookings into notification list if list is empty
   useEffect(() => {
-    if (!bookings || bookings.length === 0) return;
-
-    if (isFirstLoadRef.current) {
+    if (bookings && bookings.length > 0) {
+      // Record all existing bookings in known set
       bookings.forEach(b => knownBookingIdsRef.current.add(b.id));
-      isFirstLoadRef.current = false;
-      return;
-    }
 
-    // Find any new booking
+      if (notifications.length === 0) {
+        // Pre-fill with top 5 recent bookings so notifications tab is never empty!
+        const initialList = bookings.slice(0, 5).map(b => ({
+          id: `notif_init_${b.id}`,
+          bookingId: b.id,
+          title: `Ticket: ${b.user_name || b.name || 'Passenger'}`,
+          summary: `${b.source} ➔ ${b.destination} | ₹${b.fare || b.price || 0}`,
+          passenger: b.user_name || b.name || 'Passenger',
+          source: b.source,
+          destination: b.destination,
+          fare: b.fare || b.price || 0,
+          time: 'Recent',
+          read: true
+        }));
+        setNotifications(initialList);
+      }
+      isFirstLoadRef.current = false;
+    }
+  }, [bookings]);
+
+  // Detect newly booked tickets live
+  useEffect(() => {
+    if (!bookings || bookings.length === 0 || isFirstLoadRef.current) return;
+
     const newBookings = bookings.filter(b => !knownBookingIdsRef.current.has(b.id));
 
     if (newBookings.length > 0) {
@@ -101,26 +120,68 @@ export default function AdminNotificationCenter({ bookings = [], onSelectBooking
     }
   }, [bookings, voiceLang, voiceEnabled]);
 
-  const handleTestVoice = () => {
+  const handleTestVoice = (e) => {
+    if (e) e.stopPropagation();
     setIsSpeaking(true);
     playNotificationChime();
+    
     const testText = voiceLang.startsWith('hi') 
-      ? 'वॉइस असिस्टेंट एक्टिव है। नए टिकट बुकिंग की घोषणा यहाँ की जाएगी।'
-      : 'Voice assistant is active. New ticket bookings will be announced here.';
+      ? 'क्लाउड बस वॉइस असिस्टेंट एक्टिव है। नए टिकट बुक होने पर मैं ऐसे ही बोलकर बताऊँगा।'
+      : 'Cloud Bus Voice Assistant is active. When a new ticket is booked, I will announce it like this.';
     
     sendSystemNotification('CloudBus Voice Assistant', testText, 'test_alert');
-    speakNotification(testText, voiceLang);
-    setTimeout(() => setIsSpeaking(false), 3500);
+    
+    setTimeout(() => {
+      speakNotification(testText, voiceLang);
+      setTimeout(() => setIsSpeaking(false), 4000);
+    }, 300);
   };
 
-  const handleReplay = (notif) => {
+  const handleSimulateBooking = (e) => {
+    if (e) e.stopPropagation();
+    const demoBooking = {
+      id: Math.floor(1000 + Math.random() * 9000),
+      user_name: 'Rahul Sharma',
+      source: 'Indore',
+      destination: 'Bhopal',
+      fare: 250
+    };
+
+    const alertData = triggerAdminBookingAlert({
+      booking: demoBooking,
+      lang: voiceLang,
+      voiceEnabled: true
+    });
+
+    const newNotif = {
+      id: `notif_demo_${Date.now()}`,
+      bookingId: demoBooking.id,
+      title: alertData.title,
+      summary: alertData.summary,
+      passenger: demoBooking.user_name,
+      source: demoBooking.source,
+      destination: demoBooking.destination,
+      fare: demoBooking.fare,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      read: false
+    };
+
+    setNotifications(prev => [newNotif, ...prev]);
+    setActiveToast(newNotif);
+    setTimeout(() => setActiveToast(null), 8000);
+  };
+
+  const handleReplay = (notif, e) => {
+    if (e) e.stopPropagation();
     setIsSpeaking(true);
     playNotificationChime();
     const text = voiceLang.startsWith('hi')
       ? `टिकट अलर्ट। यात्री ${notif.passenger}, रूट ${notif.source} से ${notif.destination}, किराया ${notif.fare} रुपये।`
       : `Ticket Alert. Passenger ${notif.passenger}, Route ${notif.source} to ${notif.destination}, Fare ${notif.fare} rupees.`;
-    speakNotification(text, voiceLang);
-    setTimeout(() => setIsSpeaking(false), 3000);
+    setTimeout(() => {
+      speakNotification(text, voiceLang);
+      setTimeout(() => setIsSpeaking(false), 3500);
+    }, 300);
   };
 
   const clearAllNotifications = () => {
@@ -132,11 +193,11 @@ export default function AdminNotificationCenter({ bookings = [], onSelectBooking
 
   return (
     <div className="relative inline-flex items-center gap-2">
-      {/* Voice Assistant Toggle & Control */}
+      {/* Voice Assistant Controls */}
       <div className="flex items-center bg-slate-900/90 border border-slate-700/80 rounded-2xl p-1 shadow-inner text-xs">
         <button
           onClick={() => setVoiceEnabled(!voiceEnabled)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold transition-all ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${
             voiceEnabled 
               ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20' 
               : 'text-slate-400 hover:text-white'
@@ -145,7 +206,7 @@ export default function AdminNotificationCenter({ bookings = [], onSelectBooking
         >
           {voiceEnabled ? (
             <>
-              <Volume2 className="w-3.5 h-3.5 animate-pulse" />
+              <Volume2 className={`w-3.5 h-3.5 ${isSpeaking ? 'animate-bounce text-slate-950' : ''}`} />
               <span className="hidden sm:inline">Voice ON</span>
             </>
           ) : (
@@ -169,10 +230,11 @@ export default function AdminNotificationCenter({ bookings = [], onSelectBooking
 
             <button
               onClick={handleTestVoice}
-              className="p-1.5 hover:bg-slate-800 text-emerald-400 rounded-lg transition"
+              className="px-2 py-1 bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-slate-950 rounded-lg transition text-[10px] font-bold flex items-center gap-1 cursor-pointer"
               title="Test Voice Announcement"
             >
-              <Play className="w-3 h-3 fill-current" />
+              <Play className="w-2.5 h-2.5 fill-current" />
+              <span>Test AI</span>
             </button>
           </div>
         )}
@@ -187,7 +249,7 @@ export default function AdminNotificationCenter({ bookings = [], onSelectBooking
               setNotifications(prev => prev.map(n => ({ ...n, read: true })));
             }
           }}
-          className="relative p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/80 rounded-2xl transition shadow-md"
+          className="relative p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/80 rounded-2xl transition shadow-md cursor-pointer"
           title="Notifications & Booking Alerts"
         >
           <Bell className="w-4 h-4" />
@@ -198,9 +260,9 @@ export default function AdminNotificationCenter({ bookings = [], onSelectBooking
           )}
         </button>
 
-        {/* Dropdown Menu */}
+        {/* Dropdown Drawer */}
         {isOpen && (
-          <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-slate-900 border border-slate-700/90 rounded-3xl shadow-2xl z-50 overflow-hidden text-slate-200 backdrop-blur-lg">
+          <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-slate-900 border border-slate-700/90 rounded-3xl shadow-2xl z-50 overflow-hidden text-slate-200 backdrop-blur-lg animate-fadeIn">
             {/* Header */}
             <div className="p-4 bg-slate-800/80 border-b border-slate-700 flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -208,22 +270,33 @@ export default function AdminNotificationCenter({ bookings = [], onSelectBooking
                   <Bell className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-bold text-white">Live Booking Alerts</h3>
+                  <h3 className="text-xs font-bold text-white">Notifications & Alerts</h3>
                   <p className="text-[10px] text-slate-400">
-                    {isNativeAndroid() ? '📱 Android Phone Sync Active' : '💻 Web Browser Alerts Active'}
+                    {isNativeAndroid() ? '📱 Android Phone Sync Active' : '💻 Live AI Voice Active'}
                   </p>
                 </div>
               </div>
 
-              {notifications.length > 0 && (
+              <div className="flex items-center gap-2">
                 <button
-                  onClick={clearAllNotifications}
-                  className="text-[11px] text-rose-400 hover:text-rose-300 font-semibold flex items-center gap-1 transition"
+                  onClick={handleSimulateBooking}
+                  className="text-[10px] bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-slate-950 px-2 py-1 rounded-lg font-bold transition flex items-center gap-1 cursor-pointer"
+                  title="Simulate a test ticket booking"
                 >
-                  <Trash2 className="w-3 h-3" />
-                  <span>Clear</span>
+                  <Zap className="w-2.5 h-2.5" />
+                  <span>Demo Alert</span>
                 </button>
-              )}
+
+                {notifications.length > 0 && (
+                  <button
+                    onClick={clearAllNotifications}
+                    className="text-[11px] text-rose-400 hover:text-rose-300 font-semibold p-1 transition cursor-pointer"
+                    title="Clear All"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Notification List */}
@@ -233,9 +306,9 @@ export default function AdminNotificationCenter({ bookings = [], onSelectBooking
                   <div className="w-10 h-10 mx-auto mb-2 rounded-2xl bg-slate-800 flex items-center justify-center text-slate-500">
                     <CheckCircle2 className="w-5 h-5 text-emerald-500/60" />
                   </div>
-                  <p className="text-xs font-bold text-slate-300">All Caught Up!</p>
+                  <p className="text-xs font-bold text-slate-300">No Notifications Yet</p>
                   <p className="text-[11px] text-slate-500 mt-0.5">
-                    New ticket bookings and phone alerts will appear here in real-time.
+                    Click "Demo Alert" above to test real-time voice and sound alerts!
                   </p>
                 </div>
               ) : (
@@ -258,8 +331,8 @@ export default function AdminNotificationCenter({ bookings = [], onSelectBooking
                         </span>
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() => handleReplay(notif)}
-                            className="p-1 hover:bg-slate-700 text-slate-300 hover:text-emerald-400 rounded-md transition text-[10px] flex items-center gap-1"
+                            onClick={(e) => handleReplay(notif, e)}
+                            className="px-2 py-1 bg-slate-800 hover:bg-emerald-500 text-slate-300 hover:text-slate-950 rounded-lg transition text-[10px] font-bold flex items-center gap-1 cursor-pointer"
                             title="Speak Alert"
                           >
                             <Volume2 className="w-3 h-3" />
@@ -277,11 +350,11 @@ export default function AdminNotificationCenter({ bookings = [], onSelectBooking
             <div className="p-2.5 bg-slate-950/80 border-t border-slate-800 text-[10px] text-slate-400 flex items-center justify-between">
               <span className="flex items-center gap-1 text-emerald-400">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                Live voice announcer active
+                AI Voice Announcer Active
               </span>
               <button 
                 onClick={() => setIsOpen(false)}
-                className="text-slate-400 hover:text-white font-bold"
+                className="text-slate-400 hover:text-white font-bold cursor-pointer"
               >
                 Close
               </button>
@@ -309,7 +382,7 @@ export default function AdminNotificationCenter({ bookings = [], onSelectBooking
             </div>
             <button 
               onClick={() => setActiveToast(null)}
-              className="text-slate-400 hover:text-white p-1"
+              className="text-slate-400 hover:text-white p-1 cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>

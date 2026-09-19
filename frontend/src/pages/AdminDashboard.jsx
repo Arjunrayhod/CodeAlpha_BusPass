@@ -57,6 +57,8 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
+  };
+
   const loadDataSilently = async () => {
     try {
       const [statsRes, routesRes, bookingsRes, usersRes, supportRes] = await Promise.all([
