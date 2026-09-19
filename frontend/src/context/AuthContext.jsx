@@ -31,6 +31,18 @@ export const AuthProvider = ({ children }) => {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (token && user?.role === 'admin') {
+      try {
+        const fcmToken = window.AndroidBridge?.getFcmToken?.();
+        if (fcmToken) {
+          api.post('/fcm/register-token', { fcm_token: fcmToken });
+        }
+        window.AndroidBridge?.saveAuthToken?.(token);
+      } catch (_) {}
+    }
+  }, [token, user]);
+
   const login = async (email, password) => {
     setLoading(true);
     try {
@@ -38,6 +50,17 @@ export const AuthProvider = ({ children }) => {
       const { token: newToken, user: userData } = response.data;
       setToken(newToken);
       setUser(userData);
+
+      if (userData?.role === 'admin') {
+        try {
+          const fcmToken = window.AndroidBridge?.getFcmToken?.();
+          if (fcmToken) {
+            api.post('/fcm/register-token', { fcm_token: fcmToken });
+          }
+          window.AndroidBridge?.saveAuthToken?.(newToken);
+        } catch (_) {}
+      }
+
       return { success: true, user: userData };
     } catch (error) {
       const msg = error.response?.data?.error || 'Login failed. Please check your credentials.';
@@ -64,6 +87,13 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    try {
+      const fcmToken = window.AndroidBridge?.getFcmToken?.();
+      if (fcmToken) {
+        api.post('/fcm/unregister-token', { fcm_token: fcmToken });
+      }
+    } catch (_) {}
+
     setToken(null);
     setUser(null);
     localStorage.removeItem('buspass_token');

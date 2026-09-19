@@ -75,6 +75,19 @@ def init_db():
         )
     ''')
 
+    # Create admin_fcm_tokens table for Push Notifications
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS admin_fcm_tokens (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            fcm_token TEXT UNIQUE NOT NULL,
+            device_name TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+        )
+    ''')
+
     # Safe column migrations if database already existed
     cursor.execute("PRAGMA table_info(tickets)")
     existing_cols = [col['name'] for col in cursor.fetchall()]

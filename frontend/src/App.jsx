@@ -18,8 +18,23 @@ function AppContent() {
   const [bookingRoute, setBookingRoute] = useState(null);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isSupportOpen, setIsSupportOpen] = useState(false);
+  const [initialBookingId, setInitialBookingId] = useState(null);
   const { user, isAdmin } = useAuth();
   const { t } = useLanguage();
+
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const viewParam = params.get('view');
+      const bookingParam = params.get('booking_id');
+      if (viewParam) {
+        setCurrentView(viewParam);
+      }
+      if (bookingParam) {
+        setInitialBookingId(bookingParam);
+      }
+    } catch (_) {}
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800 antialiased">
@@ -46,7 +61,7 @@ function AppContent() {
         {currentView === 'admin' && (
           isAdmin ? (
             <ErrorBoundary>
-              <AdminDashboard />
+              <AdminDashboard highlightBookingId={initialBookingId} />
             </ErrorBoundary>
           ) : (
             <div className="text-center py-20 bg-white rounded-3xl border border-slate-200 shadow-sm max-w-md mx-auto">

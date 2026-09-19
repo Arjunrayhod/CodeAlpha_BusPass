@@ -8,6 +8,12 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 from db import get_db_connection, init_db
 from utils.ticket_generator import generate_qr_code, generate_pdf_ticket
+from utils.fcm_service import (
+    register_admin_fcm_token,
+    unregister_admin_fcm_token,
+    send_admin_booking_notification,
+    init_firebase
+)
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'cloudbus-secret-key-codealpha-2026')
@@ -422,6 +428,12 @@ def book_ticket(current_user):
     finally:
         conn.close()
 
+    # Trigger FCM Push Notification to all active Admin devices
+    try:
+        send_admin_booking_notification(get_db_connection, ticket_data)
+    except Exception as fcm_err:
+        print(f"[FCM Error]: {fcm_err}")
+
     return jsonify({
         "message": "Ticket booked successfully! Digital Pass & QR generated.",
         "ticket": ticket_data
@@ -834,10 +846,51 @@ def resolve_support_query(current_user, msg_id):
 
     return jsonify({"message": "Query marked as resolved"}), 200
 
+# ----------------- FCM Device Token Registration -----------------
+
+@app.route('/api/fcm/register-token', methods=['POST'])
+@token_required
+def register_fcm_token(current_user):
+    """
+    Registers or updates an FCM token for Admin push notifications.
+    Supports multiple active devices per admin.
+    """
+    data = request.get_json() or {}
+    fcm_token = data.get('fcm_token', '').strip()
+    device_name = data.get('device_name', 'Android Admin Phone').strip()
+
+    if not fcm_token:
+        return jsonify({"error": "fcm_token is required"}), 400
+
+    if current_user.get('role') != 'admin':
+        return jsonify({"message": "Token received. Push notifications active for admin users."}), 200
+
+    success = register_admin_fcm_token(get_db_connection, current_user['id'], fcm_token, device_name)
+    if success:
+        return jsonify({"message": "Admin device token registered for FCM push notifications"}), 200
+    else:
+        return jsonify({"error": "Failed to register FCM token"}), 500
+
+@app.route('/api/fcm/unregister-token', methods=['POST'])
+@token_required
+def unregister_fcm_token(current_user):
+    """
+    Unregisters an FCM token when an admin logs out.
+    """
+    data = request.get_json() or {}
+    fcm_token = data.get('fcm_token', '').strip()
+
+    if not fcm_token:
+        return jsonify({"error": "fcm_token is required"}), 400
+
+    unregister_admin_fcm_token(get_db_connection, fcm_token)
+    return jsonify({"message": "FCM device token unregistered successfully"}), 200
+
 # ----------------- Server Bootstrap -----------------
 
 if __name__ == '__main__':
     init_db()
+    init_firebase()
     port = int(os.getenv('PORT', 5003))
     print(f"[CloudBus] Flask API server starting on port {port}...")
     app.run(host='0.0.0.0', port=port, threaded=True, debug=False)

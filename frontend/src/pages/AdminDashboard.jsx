@@ -12,9 +12,9 @@ import AdminNotificationCenter from '../components/AdminNotificationCenter';
 import { useLanguage } from '../context/LanguageContext';
 import { downloadTicketPdf, generateClientPassPdf } from '../utils/download';
 
-export default function AdminDashboard() {
+export default function AdminDashboard({ highlightBookingId = null }) {
   const { t } = useLanguage();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState(highlightBookingId ? 'bookings' : 'overview');
   const [stats, setStats] = useState({ total_users: 0, total_routes: 0, total_tickets: 0, total_revenue: 0 });
   const [routes, setRoutes] = useState([]);
   const [bookings, setBookings] = useState([]);
