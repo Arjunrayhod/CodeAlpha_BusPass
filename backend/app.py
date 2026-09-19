@@ -838,6 +838,6 @@ def resolve_support_query(current_user, msg_id):
 
 if __name__ == '__main__':
     init_db()
-    port = int(os.getenv('PORT', 5000))
-    print(f"🚌 CloudBus Flask API server starting on port {port}...")
-    app.run(host='0.0.0.0', port=port, threaded=True, debug=True)
+    port = int(os.getenv('PORT', 5003))
+    print(f"[CloudBus] Flask API server starting on port {port}...")
+    app.run(host='0.0.0.0', port=port, threaded=True, debug=False)

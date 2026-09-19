@@ -8,6 +8,7 @@ import api, { API_BASE_URL } from '../api';
 import AnalyticsCharts from '../components/AnalyticsCharts';
 import QRScannerModal from '../components/QRScannerModal';
 import AdminSupportMessenger from '../components/AdminSupportMessenger';
+import AdminNotificationCenter from '../components/AdminNotificationCenter';
 import { useLanguage } from '../context/LanguageContext';
 import { downloadTicketPdf, generateClientPassPdf } from '../utils/download';
 
@@ -56,10 +57,30 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  const loadDataSilently = async () => {
+    try {
+      const [statsRes, routesRes, bookingsRes, usersRes, supportRes] = await Promise.all([
+        api.get('/admin/stats'),
+        api.get('/routes'),
+        api.get('/admin/bookings'),
+        api.get('/admin/users'),
+        api.get('/admin/support/all')
+      ]);
 
+      setStats(statsRes.data.stats);
+      setRoutes(routesRes.data.routes || []);
+      setBookings(bookingsRes.data.bookings || []);
+      setUsersList(usersRes.data.users || []);
+      setSupportQueries(supportRes.data.queries || []);
+    } catch (_) {}
+  };
   useEffect(() => {
     loadData();
+    // Live Auto-Refresh polling every 10 seconds for real-time ticket booking alerts & voice announcements
+    const interval = setInterval(() => {
+      loadDataSilently();
+    }, 10000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleOpenAddRoute = () => {
@@ -186,7 +207,12 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <AdminNotificationCenter 
+            bookings={bookings} 
+            onSelectBookingTab={() => setActiveTab('bookings')} 
+          />
+
           <button
             onClick={() => setIsScannerOpen(true)}
             className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl transition shadow-md shadow-blue-600/20 cursor-pointer"
