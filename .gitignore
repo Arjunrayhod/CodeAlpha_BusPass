@@ -21,6 +21,8 @@ frontend/.env.local
 *.pem
 *.key
 *.log
+*firebase-credentials*.json
+*service-account*.json
 
 # IDE & OS
 .DS_Store
